@@ -105,7 +105,7 @@ export JUNEST_HOME=$HERE/.junest
 export PATH=$PATH:$HERE/.local/share/junest/bin
 mkdir -p $HOME/.cache
 EXEC=$(grep -e '^Exec=.*' "${HERE}"/*.desktop | head -n 1 | cut -d "=" -f 2- | sed -e 's|%.||g')
-$HERE/.local/share/junest/bin/junest -n 2> /dev/null -- $EXEC "$@"
+$HERE/.local/share/junest/bin/junest -n -- $EXEC "$@"
 EOF
 chmod a+x ./AppRun
 
