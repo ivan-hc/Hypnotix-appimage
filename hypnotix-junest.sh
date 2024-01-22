@@ -3,7 +3,7 @@
 # NAME OF THE APP BY REPLACING "SAMPLE"
 APP=hypnotix
 BIN="$APP" #CHANGE THIS IF THE NAME OF THE BINARY IS DIFFERENT FROM "$APP" (for example, the binary of "obs-studio" is "obs")
-DEPENDENCES="ca-certificates circle-flags dconf hicolor-icon-theme mpv python-gobject python-mpv python-requests python-setproctitle python-unidecode xapp yt-dlp python"
+DEPENDENCES="ca-certificates circle-flags dconf hicolor-icon-theme lua mpv python-cinemagoer python-gobject python-mpv python-requests python-setproctitle python-unidecode xapp yt-dlp python"
 BASICSTUFF="binutils gzip"
 COMPILERS="base-devel"
 
@@ -106,7 +106,7 @@ chmod a+x ./AppRun
 sed -i 's#${JUNEST_HOME}/usr/bin/junest_wrapper#${HOME}/.cache/junest_wrapper.old#g' ./.local/share/junest/lib/core/wrappers.sh
 sed -i 's/rm -f "${JUNEST_HOME}${bin_path}_wrappers/#rm -f "${JUNEST_HOME}${bin_path}_wrappers/g' ./.local/share/junest/lib/core/wrappers.sh
 sed -i 's/ln/#ln/g' ./.local/share/junest/lib/core/wrappers.sh
-sed -i 's#--bind "$HOME" "$HOME"#--bind /opt /opt --bind /usr/lib/locale /usr/lib/locale --bind /etc /etc --bind /usr/share/fonts /usr/share/fonts --bind /usr/share/themes /usr/share/themes --bind /mnt /mnt --bind /media /media --bind /home /home --bind /run/user /run/user#g' .local/share/junest/lib/core/namespace.sh
+sed -i 's#--bind "$HOME" "$HOME"#--bind /opt /opt --bind /usr/lib/locale /usr/lib/locale --bind /etc/profile /etc/profile --bind /usr/share/fonts /usr/share/fonts --bind /usr/share/themes /usr/share/themes --bind /mnt /mnt --bind /media /media --bind /home /home --bind /run/user /run/user#g' .local/share/junest/lib/core/namespace.sh
 
 # EXIT THE APPDIR
 cd ..
@@ -172,7 +172,7 @@ rm -R -f ./$APP.AppDir/.junest/var/* #REMOVE ALL PACKAGES DOWNLOADED WITH THE PA
 
 BINSAVED="certificates py yt [ gsettings mkdir touch " # Enter here keywords to find and save in /usr/bin
 SHARESAVED="certificates gir gtk yt" # Enter here keywords or file/folder names to save in both /usr/share and /usr/lib
-LIBSAVED="pk p11 alsa jack pipewire pulse gir gtk py yt" # Enter here keywords or file/folder names to save in /usr/lib
+LIBSAVED="pk p11 alsa jack pipewire pulse gir gtk libmujs py yt" # Enter here keywords or file/folder names to save in /usr/lib
 
 # STEP 1, CREATE A BACKUP FOLDER WHERE TO SAVE THE FILES TO BE DISCARDED (USEFUL FOR TESTING PURPOSES)
 mkdir -p ./junest-backups/usr/bin
@@ -315,13 +315,13 @@ _saveshare(){
 _saveshare 2> /dev/null
 
 # RSYNC DEPENDENCES
-rsync -av ./deps/usr/bin/* ./$APP.AppDir/.junest/usr/bin/
-rsync -av ./deps/usr/lib/* ./$APP.AppDir/.junest/usr/lib/
-rsync -av ./deps/usr/share/* ./$APP.AppDir/.junest/usr/share/
+rm -R -f ./deps/.*
+rsync -av ./deps/* ./$APP.AppDir/.junest/
 
 # ADDITIONAL REMOVALS
 #mv ./$APP.AppDir/.junest/usr/lib/libLLVM-* ./junest-backups/usr/lib/ #INCLUDED IN THE COMPILATION PHASE, CAN SOMETIMES BE EXCLUDED FOR DAILY USE
 rm -R -f ./$APP.AppDir/.junest/usr/lib/python*/__pycache__/* #IF PYTHON IS INSTALLED, REMOVING THIS DIRECTORY CAN SAVE SEVERAL MEGABYTES
+rm -R -f ./$APP.AppDir/.cache/yay/*
 
 # REMOVE THE INBUILT HOME
 rm -R -f ./$APP.AppDir/.junest/home
