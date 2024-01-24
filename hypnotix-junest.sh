@@ -106,7 +106,7 @@ chmod a+x ./AppRun
 sed -i 's#${JUNEST_HOME}/usr/bin/junest_wrapper#${HOME}/.cache/junest_wrapper.old#g' ./.local/share/junest/lib/core/wrappers.sh
 sed -i 's/rm -f "${JUNEST_HOME}${bin_path}_wrappers/#rm -f "${JUNEST_HOME}${bin_path}_wrappers/g' ./.local/share/junest/lib/core/wrappers.sh
 sed -i 's/ln/#ln/g' ./.local/share/junest/lib/core/wrappers.sh
-sed -i 's#--bind "$HOME" "$HOME"#--bind /opt /opt --bind /usr/lib/locale /usr/lib/locale --bind /etc/profile /etc/profile --bind /usr/share/fonts /usr/share/fonts --bind /usr/share/themes /usr/share/themes --bind /mnt /mnt --bind /media /media --bind /home /home --bind /run/user /run/user#g' .local/share/junest/lib/core/namespace.sh
+sed -i 's#--bind "$HOME" "$HOME"#--bind /opt /opt --bind /usr/lib/locale /usr/lib/locale --bind /etc /etc --bind /usr/share/fonts /usr/share/fonts --bind /usr/share/themes /usr/share/themes --bind /mnt /mnt --bind /media /media --bind /home /home --bind /run/user /run/user#g' .local/share/junest/lib/core/namespace.sh
 
 # EXIT THE APPDIR
 cd ..
@@ -170,9 +170,9 @@ rm -R -f ./$APP.AppDir/.junest/var/* #REMOVE ALL PACKAGES DOWNLOADED WITH THE PA
 # WE WILL MOVE EXCESS CONTENT TO BACKUP FOLDERS (STEP 1)
 # THE AFFECTED DIRECTORIES WILL BE /usr/bin (STEP 2), /usr/lib (STEP 3) AND /usr/share (STEP 4)
 
-BINSAVED="certificates dbus py yt [ gsettings ld mkdir touch " # Enter here keywords to find and save in /usr/bin
-SHARESAVED="certificates dbus gdk gir gtk yt" # Enter here keywords or file/folder names to save in both /usr/share and /usr/lib
-LIBSAVED="pk p11 alsa dbus jack pipewire pulse cairo gdk gir gtk libmujs py type yt" # Enter here keywords or file/folder names to save in /usr/lib
+BINSAVED="certificates py yt [ gsettings ld mkdir touch " # Enter here keywords to find and save in /usr/bin
+SHARESAVED="certificates gdk gir gtk yt" # Enter here keywords or file/folder names to save in both /usr/share and /usr/lib
+LIBSAVED="pk p11 alsa jack pipewire pulse cairo gdk gir gtk libmujs py type yt" # Enter here keywords or file/folder names to save in /usr/lib
 
 # STEP 1, CREATE A BACKUP FOLDER WHERE TO SAVE THE FILES TO BE DISCARDED (USEFUL FOR TESTING PURPOSES)
 mkdir -p ./junest-backups/usr/bin
