@@ -327,6 +327,7 @@ rm -R -f ./$APP.AppDir/.cache/yay/*
 rm -R -f ./$APP.AppDir/.junest/home
 
 # ENABLE MOUNTPOINTS
+mkdir -p ./$APP.AppDir/.junest/etc/network
 mkdir -p ./$APP.AppDir/.junest/home
 mkdir -p ./$APP.AppDir/.junest/media
 mkdir -p ./$APP.AppDir/.junest/usr/lib/locale
