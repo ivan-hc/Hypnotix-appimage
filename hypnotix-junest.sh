@@ -39,10 +39,10 @@ Include = /etc/pacman.d/mirrorlist" >> ./.junest/etc/pacman.conf
 
 # CUSTOM MIRRORLIST, THIS SHOULD SPEEDUP THE INSTALLATION OF THE PACKAGES IN PACMAN (COMMENT EVERYTHING TO USE THE DEFAULT MIRROR)
 _custom_mirrorlist(){
-	#COUNTRY=$(curl -i ipinfo.io | grep country | cut -c 15- | cut -c -2)
+	COUNTRY=$(curl -i ipinfo.io | grep country | cut -c 15- | cut -c -2)
 	rm -R ./.junest/etc/pacman.d/mirrorlist
 	wget -q https://archlinux.org/mirrorlist/all/ -O - | awk NR==2 RS= | sed 's/#Server/Server/g' >> ./.junest/etc/pacman.d/mirrorlist # ENABLES WORLDWIDE MIRRORS
-	#wget -q https://archlinux.org/mirrorlist/?country="$(echo $COUNTRY)" -O - | sed 's/#Server/Server/g' >> ./.junest/etc/pacman.d/mirrorlist # ENABLES MIRRORS OF YOUR COUNTY
+	wget -q https://archlinux.org/mirrorlist/?country="$(echo $COUNTRY)" -O - | sed 's/#Server/Server/g' >> ./.junest/etc/pacman.d/mirrorlist # ENABLES MIRRORS OF YOUR COUNTY
 }
 _custom_mirrorlist
 
@@ -170,9 +170,9 @@ rm -R -f ./$APP.AppDir/.junest/var/* #REMOVE ALL PACKAGES DOWNLOADED WITH THE PA
 # WE WILL MOVE EXCESS CONTENT TO BACKUP FOLDERS (STEP 1)
 # THE AFFECTED DIRECTORIES WILL BE /usr/bin (STEP 2), /usr/lib (STEP 3) AND /usr/share (STEP 4)
 
-BINSAVED="certificates py yt [ gsettings mkdir touch " # Enter here keywords to find and save in /usr/bin
-SHARESAVED="certificates gir gtk yt" # Enter here keywords or file/folder names to save in both /usr/share and /usr/lib
-LIBSAVED="pk p11 alsa jack pipewire pulse gir gtk libmujs py yt" # Enter here keywords or file/folder names to save in /usr/lib
+BINSAVED="certificates py yt [ gsettings ld mkdir touch " # Enter here keywords to find and save in /usr/bin
+SHARESAVED="certificates gdk gir gtk yt" # Enter here keywords or file/folder names to save in both /usr/share and /usr/lib
+LIBSAVED="pk p11 alsa jack pipewire pulse cairo gdk gir gtk libmujs py type yt" # Enter here keywords or file/folder names to save in /usr/lib
 
 # STEP 1, CREATE A BACKUP FOLDER WHERE TO SAVE THE FILES TO BE DISCARDED (USEFUL FOR TESTING PURPOSES)
 mkdir -p ./junest-backups/usr/bin
@@ -320,7 +320,7 @@ rsync -av ./deps/* ./$APP.AppDir/.junest/
 
 # ADDITIONAL REMOVALS
 #mv ./$APP.AppDir/.junest/usr/lib/libLLVM-* ./junest-backups/usr/lib/ #INCLUDED IN THE COMPILATION PHASE, CAN SOMETIMES BE EXCLUDED FOR DAILY USE
-rm -R -f ./$APP.AppDir/.junest/usr/lib/python*/__pycache__/* #IF PYTHON IS INSTALLED, REMOVING THIS DIRECTORY CAN SAVE SEVERAL MEGABYTES
+#rm -R -f ./$APP.AppDir/.junest/usr/lib/python*/__pycache__/* #IF PYTHON IS INSTALLED, REMOVING THIS DIRECTORY CAN SAVE SEVERAL MEGABYTES
 rm -R -f ./$APP.AppDir/.cache/yay/*
 
 # REMOVE THE INBUILT HOME
@@ -336,4 +336,4 @@ mkdir -p ./$APP.AppDir/.junest/run/user
 
 # CREATE THE APPIMAGE
 ARCH=x86_64 ./appimagetool -n ./$APP.AppDir
-mv ./*AppImage ./"$(cat ./$APP.AppDir/*.desktop | grep 'Name=' | head -1 | cut -c 6- | sed 's/ /-/g')"_"$VERSION"-archimage3-x86_64.AppImage
+mv ./*AppImage ./"$(cat ./$APP.AppDir/*.desktop | grep 'Name=' | head -1 | cut -c 6- | sed 's/ /-/g')"_"$VERSION"-archimage3-pre1-x86_64.AppImage
