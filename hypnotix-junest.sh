@@ -98,7 +98,7 @@ export JUNEST_HOME=$HERE/.junest
 export PATH=$PATH:$HERE/.local/share/junest/bin
 mkdir -p $HOME/.cache
 EXEC=$(grep -e '^Exec=.*' "${HERE}"/*.desktop | head -n 1 | cut -d "=" -f 2- | sed -e 's|%.||g')
-$HERE/.local/share/junest/bin/junest -n -- $EXEC "$@"
+$HERE/.local/share/junest/bin/junest -n -b " --bind /etc/hosts /etc/hosts --bind /etc/ssl /etc/ssl" -- $EXEC "$@"
 EOF
 chmod a+x ./AppRun
 
