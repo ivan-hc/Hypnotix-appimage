@@ -3,7 +3,7 @@
 # NAME OF THE APP BY REPLACING "SAMPLE"
 APP=hypnotix
 BIN="$APP" #CHANGE THIS IF THE NAME OF THE BINARY IS DIFFERENT FROM "$APP" (for example, the binary of "obs-studio" is "obs")
-DEPENDENCES="ca-certificates circle-flags dconf hicolor-icon-theme libpipewire libx11 lua mpv pipewire pipewire-alsa python-cinemagoer python-gobject python-mpv python-requests python-setproctitle python-unidecode xapp yt-dlp python glibc libnih"
+DEPENDENCES="ca-certificates circle-flags dconf hicolor-icon-theme libpipewire libx11 lua mpv pipewire pipewire-alsa python-cinemagoer python-gobject python-mpv python-requests python-setproctitle python-unidecode xapp yt-dlp python libnih"
 BASICSTUFF="binutils gzip"
 COMPILERS="base-devel"
 
@@ -177,7 +177,7 @@ rm -R -f ./$APP.AppDir/.junest/var/* #REMOVE ALL PACKAGES DOWNLOADED WITH THE PA
 
 BINSAVED="certificates py yt [ gsettings ld mkdir touch " # Enter here keywords to find and save in /usr/bin
 SHARESAVED="certificates gdk gir gtk yt" # Enter here keywords or file/folder names to save in both /usr/share and /usr/lib
-LIBSAVED="pk p11 alsa jack pipewire pulse cairo gdk gir gtk libmujs py type yt" # Enter here keywords or file/folder names to save in /usr/lib
+LIBSAVED="pk p11 alsa jack pipewire pulse cairo gdk gir gtk libmujs py type yt libdl" # Enter here keywords or file/folder names to save in /usr/lib
 
 # STEP 1, CREATE A BACKUP FOLDER WHERE TO SAVE THE FILES TO BE DISCARDED (USEFUL FOR TESTING PURPOSES)
 mkdir -p ./junest-backups/usr/bin
