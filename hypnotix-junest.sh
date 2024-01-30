@@ -3,7 +3,7 @@
 # NAME OF THE APP BY REPLACING "SAMPLE"
 APP=hypnotix
 BIN="$APP" #CHANGE THIS IF THE NAME OF THE BINARY IS DIFFERENT FROM "$APP" (for example, the binary of "obs-studio" is "obs")
-DEPENDENCES="ca-certificates circle-flags dconf hicolor-icon-theme libpipewire libx11 lua mpv pipewire pipewire-alsa python-cinemagoer python-gobject python-mpv python-requests python-setproctitle python-unidecode xapp yt-dlp python"
+DEPENDENCES="ca-certificates circle-flags dconf hicolor-icon-theme libpipewire libx11 lua mpv pipewire pipewire-alsa python-cinemagoer python-gobject python-mpv python-requests python-setproctitle python-unidecode xapp yt-dlp python mesa-vdpau libvdpau libvdpau-va-gl libva-vdpau-driver"
 BASICSTUFF="binutils gzip"
 COMPILERS="base-devel"
 
