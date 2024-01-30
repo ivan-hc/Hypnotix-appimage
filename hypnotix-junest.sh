@@ -96,12 +96,30 @@ HERE="$(dirname "$(readlink -f $0)")"
 export UNION_PRELOAD=$HERE
 export JUNEST_HOME=$HERE/.junest
 export PATH=$PATH:$HERE/.local/share/junest/bin
+
+export VDPAUPATH=$(find /usr/lib -maxdepth 2 -name vdpau)
+
+# FIND THE VENDOR
+VENDOR=$(glxinfo -B | grep "OpenGL vendor")
+if [[ $VENDOR == *"NVIDIA"* ]]; then
+        NVIDIAJSON=$(find /usr/share -name "*nvidia*json" | sed 's/ /:/g')
+	export VK_ICD_FILENAMES=$NVIDIAJSON
+	VENDORLIB="nvidia"
+	export MESA_LOADER_DRIVER_OVERRIDE=$VENDORLIB
+fi
+
+HOST_VDPAU_DRIVER="--bind $(find /usr/lib -name *libvdpau*$VENDORLIB.so* | head -1) /usr/lib/libvdpau_nvidia.so"
+
 mkdir -p $HOME/.cache
 if test -f /etc/resolv.conf; then
 	ETC_RESOLV=' --bind /etc/resolv.conf /etc/resolv.conf ' # NEEDED TO CONNECT THE INTERNET
 fi
 EXEC=$(grep -e '^Exec=.*' "${HERE}"/*.desktop | head -n 1 | cut -d "=" -f 2- | sed -e 's|%.||g')
-$HERE/.local/share/junest/bin/junest -n -b "$ETC_RESOLV" -- $EXEC "$@"
+if [[ $VENDOR == *"NVIDIA"* ]]; then
+	$HERE/.local/share/junest/bin/junest -n -b "$ETC_RESOLV $HOST_VDPAU_DRIVER" -- $EXEC "$@"
+else
+	$HERE/.local/share/junest/bin/junest -n -b "$ETC_RESOLV" -- $EXEC "$@"
+fi
 EOF
 chmod a+x ./AppRun
 
@@ -339,6 +357,8 @@ mkdir -p ./$APP.AppDir/.junest/usr/lib/locale
 mkdir -p ./$APP.AppDir/.junest/usr/share/fonts
 mkdir -p ./$APP.AppDir/.junest/usr/share/themes
 mkdir -p ./$APP.AppDir/.junest/run/user
+
+touch ./$APP.AppDir/.junest/usr/lib/libvdpau_nvidia.so
 
 # CREATE THE APPIMAGE
 ARCH=x86_64 ./appimagetool -n ./$APP.AppDir
