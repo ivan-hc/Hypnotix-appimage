@@ -103,10 +103,12 @@ if test -f /etc/resolv.conf; then
 fi
 
 VENDOR=$(glxinfo -B | grep "OpenGL vendor")
-VDPAU_NVIDIA=" --bind $(find /usr/lib -name *libvdpau*nvidia.so* | head -1) /usr/lib/libvdpau_nvidia.so "
+#VDPAU_NVIDIA=" --bind $(find /usr/lib -name *libvdpau*nvidia.so* | head -1) /usr/lib/libvdpau_nvidia.so "
 
 VDPAUPATH=$(find /usr/lib -maxdepth 2 -name vdpau)
 VDPAU_PATH=" --bind $VDPAUPATH /usr/lib/vdpau"
+
+#DRIPATH=$(find /usr/lib -name dri)
 
 EXEC=$(grep -e '^Exec=.*' "${HERE}"/*.desktop | head -n 1 | cut -d "=" -f 2- | sed -e 's|%.||g')
 if echo "$VENDOR" | grep -q *"NVIDIA"*; then
@@ -114,11 +116,10 @@ if echo "$VENDOR" | grep -q *"NVIDIA"*; then
 	export VK_ICD_FILENAMES=$NVIDIAJSON
 	VENDORLIB="nvidia"
 	export MESA_LOADER_DRIVER_OVERRIDE=$VENDORLIB
-	$HERE/.local/share/junest/bin/junest -n -b "$ETC_RESOLV" -- $EXEC "$@"
+	$HERE/.local/share/junest/bin/junest -n -b "$ETC_RESOLV $VDPAU_PATH $VDPAU_NVIDIA --bind $DRIPATH /usr/lib/dri" -- $EXEC "$@"
 else
-	$HERE/.local/share/junest/bin/junest -n -b "$ETC_RESOLV $VDPAU_PATH $VDPAU_NVIDIA" -- $EXEC "$@"
+	$HERE/.local/share/junest/bin/junest -n -b "$ETC_RESOLV" -- $EXEC "$@"
 fi
-
 EOF
 chmod a+x ./AppRun
 
@@ -194,7 +195,7 @@ rm -R -f ./$APP.AppDir/.junest/var/* #REMOVE ALL PACKAGES DOWNLOADED WITH THE PA
 
 BINSAVED="certificates py yt [ gsettings ld mkdir touch " # Enter here keywords to find and save in /usr/bin
 SHARESAVED="certificates gdk gir gtk yt" # Enter here keywords or file/folder names to save in both /usr/share and /usr/lib
-LIBSAVED="pk p11 alsa jack pipewire pulse cairo gdk gir gtk libmujs py type yt libdl libvlc vdpau" # Enter here keywords or file/folder names to save in /usr/lib
+LIBSAVED="pk p11 alsa jack pipewire pulse cairo gdk gir gtk libmujs py type yt libdl libEGL libvlc vdpau zink" # Enter here keywords or file/folder names to save in /usr/lib
 
 # STEP 1, CREATE A BACKUP FOLDER WHERE TO SAVE THE FILES TO BE DISCARDED (USEFUL FOR TESTING PURPOSES)
 mkdir -p ./junest-backups/usr/bin
@@ -297,7 +298,7 @@ _mvlibs(){
 
 _binlibs 2> /dev/null
 
-#_include_swrast_dri 2> /dev/null
+_include_swrast_dri 2> /dev/null
 
 _libkeywords 2> /dev/null
 
