@@ -6,7 +6,7 @@ BIN="$APP" #CHANGE THIS IF THE NAME OF THE BINARY IS DIFFERENT FROM "$APP" (for 
 DEPENDENCES="ca-certificates circle-flags dconf hicolor-icon-theme libpipewire libx11 lua mpv pipewire pipewire-alsa python-cinemagoer python-gobject python-mpv python-requests python-setproctitle python-unidecode xapp yt-dlp python libnih"
 BASICSTUFF="binutils gzip"
 COMPILERS="base-devel"
-EXTRA="vlc"
+EXTRA="vlc mesa"
 
 # CREATE THE APPDIR (DON'T TOUCH THIS)...
 wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
@@ -118,7 +118,7 @@ if echo "$VENDOR" | grep -q *"NVIDIA"*; then
 	export MESA_LOADER_DRIVER_OVERRIDE=$VENDORLIB
 	$HERE/.local/share/junest/bin/junest -n -b "$ETC_RESOLV $VDPAU_PATH $VDPAU_NVIDIA --bind $DRIPATH /usr/lib/dri" -- $EXEC "$@"
 else
-	$HERE/.local/share/junest/bin/junest -n -b "$ETC_RESOLV" -- $EXEC "$@"
+	$HERE/.local/share/junest/bin/junest -n -b "$ETC_RESOLV" -- env __GLX_VENDOR_LIBRARY_NAME=mesa MESA_LOADER_DRIVER_OVERRIDE=zink GALLIUM_DRIVER=zink $EXEC "$@"
 fi
 EOF
 chmod a+x ./AppRun
