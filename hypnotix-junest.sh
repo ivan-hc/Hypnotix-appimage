@@ -6,6 +6,7 @@ BIN="$APP" #CHANGE THIS IF THE NAME OF THE BINARY IS DIFFERENT FROM "$APP" (for 
 DEPENDENCES="ca-certificates circle-flags dconf hicolor-icon-theme libpipewire libx11 lua mpv pipewire pipewire-alsa python-cinemagoer python-gobject python-mpv python-requests python-setproctitle python-unidecode xapp yt-dlp python libnih"
 BASICSTUFF="binutils gzip"
 COMPILERS="base-devel"
+EXTRA="vlc"
 
 # CREATE THE APPDIR (DON'T TOUCH THIS)...
 wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
@@ -57,7 +58,7 @@ sed -i 's/Required DatabaseOptional/Never/g' ./.junest/etc/pacman.conf
 # INSTALL THE PROGRAM USING YAY
 ./.local/share/junest/bin/junest -- yay -Syy
 ./.local/share/junest/bin/junest -- gpg --keyserver keyserver.ubuntu.com --recv-key C01E1CAD5EA2C4F0B8E3571504C367C218ADD4FF # UNCOMMENT IF YOU USE THE AUR
-./.local/share/junest/bin/junest -- yay --noconfirm -S gnu-free-fonts $(echo "$BASICSTUFF $COMPILERS $DEPENDENCES $APP")
+./.local/share/junest/bin/junest -- yay --noconfirm -S gnu-free-fonts $(echo "$BASICSTUFF $COMPILERS $DEPENDENCES $APP $EXTRA")
 
 # SET THE LOCALE (DON'T TOUCH THIS)
 #sed "s/# /#>/g" ./.junest/etc/locale.gen | sed "s/#//g" | sed "s/>/#/g" >> ./locale.gen # UNCOMMENT TO ENABLE ALL THE LANGUAGES
@@ -96,30 +97,28 @@ HERE="$(dirname "$(readlink -f $0)")"
 export UNION_PRELOAD=$HERE
 export JUNEST_HOME=$HERE/.junest
 export PATH=$PATH:$HERE/.local/share/junest/bin
-
-export VDPAUPATH=$(find /usr/lib -maxdepth 2 -name vdpau)
-
-# FIND THE VENDOR
-VENDOR=$(glxinfo -B | grep "OpenGL vendor")
-if [[ $VENDOR == *"NVIDIA"* ]]; then
-        NVIDIAJSON=$(find /usr/share -name "*nvidia*json" | sed 's/ /:/g')
-	export VK_ICD_FILENAMES=$NVIDIAJSON
-	VENDORLIB="nvidia"
-	export MESA_LOADER_DRIVER_OVERRIDE=$VENDORLIB
-fi
-
-HOST_VDPAU_DRIVER="--bind $(find /usr/lib -name *libvdpau*$VENDORLIB.so* | head -1) /usr/lib/libvdpau_nvidia.so"
-
 mkdir -p $HOME/.cache
 if test -f /etc/resolv.conf; then
 	ETC_RESOLV=' --bind /etc/resolv.conf /etc/resolv.conf ' # NEEDED TO CONNECT THE INTERNET
 fi
+
+VENDOR=$(glxinfo -B | grep "OpenGL vendor")
+VDPAU_NVIDIA=" --bind $(find /usr/lib -name *libvdpau*nvidia.so* | head -1) /usr/lib/libvdpau_nvidia.so "
+
+VDPAUPATH=$(find /usr/lib -maxdepth 2 -name vdpau)
+VDPAU_PATH=" --bind $VDPAUPATH /usr/lib/vdpau"
+
 EXEC=$(grep -e '^Exec=.*' "${HERE}"/*.desktop | head -n 1 | cut -d "=" -f 2- | sed -e 's|%.||g')
-if [[ $VENDOR == *"NVIDIA"* ]]; then
-	$HERE/.local/share/junest/bin/junest -n -b "$ETC_RESOLV $HOST_VDPAU_DRIVER" -- $EXEC "$@"
-else
+if echo "$VENDOR" | grep -q *"NVIDIA"*; then
+	NVIDIAJSON=$(find /usr/share -name "*nvidia*json" | sed 's/ /:/g')
+	export VK_ICD_FILENAMES=$NVIDIAJSON
+	VENDORLIB="nvidia"
+	export MESA_LOADER_DRIVER_OVERRIDE=$VENDORLIB
 	$HERE/.local/share/junest/bin/junest -n -b "$ETC_RESOLV" -- $EXEC "$@"
+else
+	$HERE/.local/share/junest/bin/junest -n -b "$ETC_RESOLV $VDPAU_PATH $VDPAU_NVIDIA" -- $EXEC "$@"
 fi
+
 EOF
 chmod a+x ./AppRun
 
@@ -195,7 +194,7 @@ rm -R -f ./$APP.AppDir/.junest/var/* #REMOVE ALL PACKAGES DOWNLOADED WITH THE PA
 
 BINSAVED="certificates py yt [ gsettings ld mkdir touch " # Enter here keywords to find and save in /usr/bin
 SHARESAVED="certificates gdk gir gtk yt" # Enter here keywords or file/folder names to save in both /usr/share and /usr/lib
-LIBSAVED="pk p11 alsa jack pipewire pulse cairo gdk gir gtk libmujs py type yt libdl" # Enter here keywords or file/folder names to save in /usr/lib
+LIBSAVED="pk p11 alsa jack pipewire pulse cairo gdk gir gtk libmujs py type yt libdl libvlc vdpau" # Enter here keywords or file/folder names to save in /usr/lib
 
 # STEP 1, CREATE A BACKUP FOLDER WHERE TO SAVE THE FILES TO BE DISCARDED (USEFUL FOR TESTING PURPOSES)
 mkdir -p ./junest-backups/usr/bin
@@ -358,6 +357,7 @@ mkdir -p ./$APP.AppDir/.junest/usr/share/fonts
 mkdir -p ./$APP.AppDir/.junest/usr/share/themes
 mkdir -p ./$APP.AppDir/.junest/run/user
 
+mkdir -p ./$APP.AppDir/.junest/usr/lib/vdpau
 touch ./$APP.AppDir/.junest/usr/lib/libvdpau_nvidia.so
 
 # CREATE THE APPIMAGE
