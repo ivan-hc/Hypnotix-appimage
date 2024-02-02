@@ -39,21 +39,19 @@ ingredients:
     - deb http://ftp.debian.org/debian/ stable-updates main contrib non-free
   packages:
     - $APP
-    - yt-dlp
-    - xapp
+    - circle-flags-svg
+    - dconf-gsettings-backend
     - gir1.2-xapp-1.0
-    - libxapp1
-    - xapps-common
+    - gsettings-backend
+    - libmpv-dev
     - python3
     - python3-gi
-    - python3-configobj
+    - python3-gi-cairo
     - python3-imdbpy
+    - python3-requests
     - python3-setproctitle
-    - python3-tldextract
-    - libmpv-dev
-    - libimdb-film-perl
-    - circle-flags-svg" >> recipe.yml
-
+    - python3-unidecode
+    - xapps-common" >> recipe.yml
 
 # DOWNLOAD ALL THE NEEDED PACKAGES AND COMPILE THE APPDIR
 ./pkg2appimage ./recipe.yml
@@ -129,6 +127,7 @@ sed -i 's/self.dark_mode_manager/#self.dark_mode_manager/g' ./$APP/$APP.AppDir/u
 # REMOVE UNNEEDED FILES
 find ./$APP/$APP.AppDir/usr/share/doc/* -not -iname "*$APP*" -a -not -name "." -delete
 find ./$APP/$APP.AppDir/usr/share/locale/* -not -iname "*$APP*" -a -not -name "." -delete
+rm -R -f ./$APP/$APP.AppDir/usr/include
 
 # EXPORT THE APP TO AN APPIMAGE
 ARCH=x86_64 ./appimagetool -n ./$APP/$APP.AppDir
