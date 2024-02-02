@@ -12,3 +12,8 @@ This repository creates and distributes the unofficial Appimage of Hypnotix.
 [xcb] Aborting, sorry about that.
 xcb_io.c:278: poll_for_event: Assertion `!xcb_xlib_threads_sequence_lost' failed.
 ```
+also
+```
+libEGL warning: DRI2: failed to authenticate
+```
+and this happens with both versions, the one based on .deb packages and the one based on JuNust (Arch Linux).
