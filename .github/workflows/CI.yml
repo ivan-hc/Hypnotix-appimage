@@ -17,9 +17,9 @@ jobs:
       run: |
         sudo apt update
         sudo apt install libfuse2
-        wget https://raw.githubusercontent.com/ivan-hc/Hypnotix-appimage/main/hypnotix-junest.sh
-        chmod a+x ./hypnotix-junest.sh
-        ./hypnotix-junest.sh
+        wget https://raw.githubusercontent.com/ivan-hc/Hypnotix-appimage/main/hypnotix-deb.sh
+        chmod a+x ./hypnotix-deb.sh
+        ./hypnotix-deb.sh
         mkdir dist
         mv *AppImage dist/
 
