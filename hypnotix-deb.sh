@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 APP=hypnotix
+VERSION=$(wget -q "http://packages.linuxmint.com/search.php?release=any&section=any&keyword=hypnotix" -O - | grep -Po '(?<=href=")[^"]*' | grep "_all.deb" | sort | tail -1 | grep -o -P '(?<=hypnotix_).*(?=_all.deb)')
 
 # CREATE A TEMPORARY DIRECTORY
 mkdir -p tmp
@@ -132,5 +133,5 @@ rm -R -f ./$APP/$APP.AppDir/usr/include
 # EXPORT THE APP TO AN APPIMAGE
 ARCH=x86_64 ./appimagetool -n ./$APP/$APP.AppDir
 cd ..
-mv ./tmp/*.AppImage .
+mv ./tmp/*.AppImage ./Hypnotix-$VERSION-x86_64.AppImage
 chmod a+x *.AppImage
