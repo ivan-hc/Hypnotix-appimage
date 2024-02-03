@@ -94,7 +94,7 @@ else
 	echo "System version of yt-dlp selected."
 fi
 
-"${HERE}"/usr/lib/hypnotix/hypnotix.py &
+"${HERE}"/usr/lib/hypnotix/hypnotix.py
 EOF
 
 # MADE THE APPRUN EXECUTABLE
