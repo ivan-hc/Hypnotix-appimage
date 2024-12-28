@@ -3,7 +3,7 @@
 # NAME OF THE APP BY REPLACING "SAMPLE"
 APP=hypnotix
 BIN="$APP" #CHANGE THIS IF THE NAME OF THE BINARY IS DIFFERENT FROM "$APP" (for example, the binary of "obs-studio" is "obs")
-DEPENDENCES="ca-certificates circle-flags libgirepository xapp gtk3 python-xlib gdk-pixbuf-xlib mujs python-idna libidn nss-mdns "
+DEPENDENCES="ca-certificates circle-flags libgirepository xapp gtk3 python-xlib gdk-pixbuf-xlib mujs python-idna libidn nss-mdns"
 BASICSTUFF="binutils debugedit gzip"
 COMPILERS="base-devel"
 
@@ -202,6 +202,41 @@ function _create_AppRun() {
 	export JUNEST_HOME=$HERE/.junest
 	export PATH=$PATH:$HERE/.local/share/junest/bin
 
+	HWACCEL=1
+
+	_nvidia_junest() {
+		nvidia_junest_script="https://raw.githubusercontent.com/ivan-hc/ArchImage/main/nvidia-junest.sh"
+		CACHEDIR="${XDG_CACHE_HOME:-$HOME/.cache}"
+		if [ "${nvidia_driver_version}" != "${nvidia_driver_conty}" ]; then
+			cd "${CACHEDIR}"
+			if command -v curl >/dev/null 2>&1; then
+				curl -Lo nvidia-junest.sh "${nvidia_junest_script}" 2>/dev/null
+				chmod a+x nvidia-junest.sh && ./nvidia-junest.sh
+			else
+				echo "You need \"curl\" to download this script"; exit 1
+			fi
+		fi
+	}
+
+	if [ "$HWACCEL" = 1 ] && [ -f /sys/module/nvidia/version ]; then
+		nvidia_driver_version="$(cat /sys/module/nvidia/version)"
+		DATADIR="${XDG_DATA_HOME:-$HOME/.local/share}"
+		CACHEDIR="${XDG_CACHE_HOME:-$HOME/.cache}"
+		mkdir -p "${CACHEDIR}"
+		CONTY_DIR="${DATADIR}/Conty/overlayfs_shared"
+		if [ -d "${CONTY_DIR}" ]; then
+			nvidia_driver_conty="$(cat "${CONTY_DIR}"/nvidia/current-nvidia-version)"
+			if [ "${nvidia_driver_version}" != "${nvidia_driver_conty}" ]; then
+				_nvidia_junest
+			fi
+		else
+			_nvidia_junest
+		fi
+		export PATH="${PATH}":"${CONTY_DIR}"/up/usr/bin:"${PATH}"
+		export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}":"${CONTY_DIR}"/up/usr/lib:"${LD_LIBRARY_PATH}"
+		export XDG_DATA_DIRS="${XDG_DATA_DIRS}":"${CONTY_DIR}"/up/usr/share:"${XDG_DATA_DIRS}"
+	fi
+
 	BINDS=" --dev-bind /dev /dev \
 		--ro-bind /sys /sys \
 		--bind-try /tmp /tmp \
@@ -217,6 +252,7 @@ function _create_AppRun() {
 		--bind-try /media /media \
 		--bind-try /mnt /mnt \
 		--bind-try /opt /opt \
+ 		--bind-try /run/media /run/media \
 		--bind-try /usr/lib/locale /usr/lib/locale \
 		--bind-try /usr/share/fonts /usr/share/fonts \
 		--bind-try /usr/share/themes /usr/share/themes \
@@ -345,7 +381,7 @@ echo ""
 BINSAVED="certificates [ gsettings ld mkdir touch" # Enter here keywords to find and save in /usr/bin
 SHARESAVED="certificates SAVESHAREPLEASE" # Enter here keywords or file/directory names to save in both /usr/share and /usr/lib
 lib_browser_launcher="gio-launch-desktop libdl.so libpthread.so librt.so libasound.so libX11-xcb.so" # Libraries and files needed to launche the default browser
-LIBSAVED="pk p11 alsa jack pipewire pulse girepository gdk-pixbuf librsvg libdav libGLX $lib_browser_launcher" # Enter here keywords or file/directory names to save in /usr/lib
+LIBSAVED="pk p11 alsa jack pipewire pulse girepository gdk-pixbuf librsvg libdav libGLX libmujs.so $lib_browser_launcher" # Enter here keywords or file/directory names to save in /usr/lib
 
 # Save files in /usr/bin
 function _savebins() {
@@ -512,6 +548,7 @@ function _enable_mountpoints_for_the_inbuilt_bubblewrap() {
 	mkdir -p ./"$APP".AppDir/.junest/usr/lib/locale
 	mkdir -p ./"$APP".AppDir/.junest/usr/share/fonts
 	mkdir -p ./"$APP".AppDir/.junest/usr/share/themes
+	mkdir -p ./"$APP".AppDir/.junest/run/media
 	mkdir -p ./"$APP".AppDir/.junest/run/user
 	rm -f ./"$APP".AppDir/.junest/etc/localtime && touch ./"$APP".AppDir/.junest/etc/localtime
 	[ ! -f ./"$APP".AppDir/.junest/etc/asound.conf ] && touch ./"$APP".AppDir/.junest/etc/asound.conf
@@ -532,4 +569,4 @@ if test -f ./*.AppImage; then
 	rm -R -f ./*archimage*.AppImage
 fi
 ARCH=x86_64 ./appimagetool --comp zstd --mksquashfs-opt -Xcompression-level --mksquashfs-opt 20 ./$APP.AppDir
-mv ./*AppImage ./"$(cat ./"$APP".AppDir/*.desktop | grep 'Name=' | head -1 | cut -c 6- | sed 's/ /-/g')"_"$VERSION"-archimage3.4.4-2-x86_64.AppImage
+mv ./*AppImage ./"$(cat ./"$APP".AppDir/*.desktop | grep 'Name=' | head -1 | cut -c 6- | sed 's/ /-/g')"_"$VERSION"-archimage4rc1-x86_64.AppImage
