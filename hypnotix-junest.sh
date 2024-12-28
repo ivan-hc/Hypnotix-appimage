@@ -202,40 +202,23 @@ function _create_AppRun() {
 	export JUNEST_HOME=$HERE/.junest
 	export PATH=$PATH:$HERE/.local/share/junest/bin
 
-	HWACCEL=1
-
-	_nvidia_junest() {
-		nvidia_junest_script="https://raw.githubusercontent.com/ivan-hc/ArchImage/main/nvidia-junest.sh"
-		CACHEDIR="${XDG_CACHE_HOME:-$HOME/.cache}"
-		if [ "${nvidia_driver_version}" != "${nvidia_driver_conty}" ]; then
-			cd "${CACHEDIR}"
-			if command -v curl >/dev/null 2>&1; then
-				curl -Lo nvidia-junest.sh "${nvidia_junest_script}" 2>/dev/null
-				chmod a+x nvidia-junest.sh && ./nvidia-junest.sh
-			else
-				echo "You need \"curl\" to download this script"; exit 1
-			fi
-		fi
-	}
-
-	if [ "$HWACCEL" = 1 ] && [ -f /sys/module/nvidia/version ]; then
-		nvidia_driver_version="$(cat /sys/module/nvidia/version)"
-		DATADIR="${XDG_DATA_HOME:-$HOME/.local/share}"
-		CACHEDIR="${XDG_CACHE_HOME:-$HOME/.cache}"
-		mkdir -p "${CACHEDIR}"
-		CONTY_DIR="${DATADIR}/Conty/overlayfs_shared"
-		if [ -d "${CONTY_DIR}" ]; then
-			nvidia_driver_conty="$(cat "${CONTY_DIR}"/nvidia/current-nvidia-version)"
-			if [ "${nvidia_driver_version}" != "${nvidia_driver_conty}" ]; then
-				_nvidia_junest
-			fi
-		else
-			_nvidia_junest
-		fi
-		export PATH="${PATH}":"${CONTY_DIR}"/up/usr/bin:"${PATH}"
-		export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}":"${CONTY_DIR}"/up/usr/lib:"${LD_LIBRARY_PATH}"
-		export XDG_DATA_DIRS="${XDG_DATA_DIRS}":"${CONTY_DIR}"/up/usr/share:"${XDG_DATA_DIRS}"
+	export DATADIR="${XDG_DATA_HOME:-$HOME/.local/share}"
+	export CONTY_DIR="${DATADIR}/Conty/overlayfs_shared"
+	export CACHEDIR="${XDG_CACHE_HOME:-$HOME/.cache}"
+	[ -f /sys/module/nvidia/version ] && nvidia_driver_version="$(cat /sys/module/nvidia/version)"
+	[ -f "${CONTY_DIR}"/nvidia/current-nvidia-version ] && nvidia_driver_conty="$(cat "${CONTY_DIR}"/nvidia/current-nvidia-version)"
+	if [ "${nvidia_driver_version}" != "${nvidia_driver_conty}" ]; then
+	   if command -v curl >/dev/null 2>&1; then
+	      mkdir -p "${CACHEDIR}" && cd "${CACHEDIR}" || exit 1
+	      curl -Ls "https://raw.githubusercontent.com/ivan-hc/ArchImage/main/nvidia-junest.sh" > /nvidia-junest.sh
+	      chmod a+x ./nvidia-junest.sh && ./nvidia-junest.sh
+	   else
+	      echo "You need \"curl\" to download this script"; exit 1
+	   fi
 	fi
+	[ -d "${CONTY_DIR}"/up/usr/bin ] && export PATH="${PATH}":"${CONTY_DIR}"/up/usr/bin:"${PATH}"
+	[ -d "${CONTY_DIR}"/up/usr/lib ] && export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}":"${CONTY_DIR}"/up/usr/lib:"${LD_LIBRARY_PATH}"
+	[ -d "${CONTY_DIR}"/up/usr/share ] && export XDG_DATA_DIRS="${XDG_DATA_DIRS}":"${CONTY_DIR}"/up/usr/share:"${XDG_DATA_DIRS}"
 
 	BINDS=" --dev-bind /dev /dev \
 		--ro-bind /sys /sys \
