@@ -213,6 +213,7 @@ cat <<-'HEREDOC' >> ./AppRun
 HERE="$(dirname "$(readlink -f "$0")")"
 export UNION_PRELOAD="$HERE"
 export JUNEST_HOME="$HERE"/.junest
+export GSETTINGS_SCHEMA_DIR="$JUNEST_HOME"/usr/share/glib-2.0/schemas:"${GSETTINGS_SCHEMA_DIR}"
 
 if command -v unshare >/dev/null 2>&1 && ! unshare --user -p /bin/true >/dev/null 2>&1; then
    PROOT_ON=1
@@ -627,7 +628,7 @@ fi
 ./uruntime --appimage-mkdwarfs -f \
 	--set-owner 0 --set-group 0 \
 	--no-history --no-create-timestamp \
-	--compression zstd:level=22 -S20 -B16 \
+	--compression zstd:level=22 -S24 -B16 \
 	--header uruntime \
 	-i ./"$APP".AppDir -o "$APPNAME"_"$VERSION"-archimage4.2-x86_64.AppImage
 
