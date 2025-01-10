@@ -2,7 +2,7 @@
 
 APP=hypnotix
 BIN="$APP" #CHANGE THIS IF THE NAME OF THE BINARY IS DIFFERENT FROM "$APP" (for example, the binary of "obs-studio" is "obs")
-DEPENDENCES="" #SYNTAX: "APP1 APP2 APP3 APP4...", LEAVE BLANK IF NO OTHER DEPENDENCES ARE NEEDED
+DEPENDENCES="python-gobject" #SYNTAX: "APP1 APP2 APP3 APP4...", LEAVE BLANK IF NO OTHER DEPENDENCES ARE NEEDED
 BASICSTUFF="binutils debugedit gzip"
 COMPILERS="base-devel"
 
@@ -10,7 +10,7 @@ COMPILERS="base-devel"
 #	KEYWORDS TO FIND AND SAVE WHEN COMPILING THE APPIMAGE
 #############################################################################
 
-BINSAVED="[ gsettings ld mkdir touch cat chmod uname readlink dirname sed grep head cut"
+BINSAVED="SAVEBINSPLEASE"
 SHARESAVED="icons"
 lib_audio_keywords="alsa jack pipewire pulse"
 lib_browser_launcher="gio-launch-desktop libdl.so libpthread.so librt.so libasound.so libX11-xcb.so libxapp-gtk3-module.so libgtk-3.so.0 pk p11"
@@ -20,19 +20,19 @@ LIBSAVED="girepository gdk-pixbuf librsvg libdav libGLX libmujs.so $lib_audio_ke
 #	SETUP THE ENVIRONMENT
 #############################################################################
 
-# Download uruntime for better AppImage compression
-if [ ! -f ./uruntime ]; then
+# Download appimagetool
+if [ ! -f ./appimagetool ]; then
 	echo "-----------------------------------------------------------------------------"
-	echo "◆ Downloading \"uruntime\" from https://github.com/VHSgunzo/uruntime"
+	echo "◆ Downloading \"appimagetool\" from https://github.com/AppImage/appimagetool"
 	echo "-----------------------------------------------------------------------------"
-	[ ! -f ./uruntime ] && curl -#Lo uruntime "$(curl -Ls https://api.github.com/repos/VHSgunzo/uruntime/releases | sed 's/[()",{} ]/\n/g' | grep -oi "https.*appimage.*dwarfs.*x86_64$" | head -1)" 2>/dev/null && chmod a+x uruntime
+	curl -#Lo appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage && chmod a+x appimagetool
 fi
 
 # Create and enter the AppDir
 mkdir -p "$APP".AppDir && cd "$APP".AppDir || exit 1
 
 # Set the AppDir as a temporary $HOME directory
-HOME="$(dirname "$(readlink -f $0)")"
+HOME="$(dirname "$(readlink -f "$0")")"
 
 #############################################################################
 #	DOWNLOAD, INSTALL AND CONFIGURE JUNEST
@@ -53,7 +53,7 @@ _enable_chaoticaur() {
 
 _custom_mirrorlist() {
 	COUNTRY=$(curl -i ipinfo.io 2>/dev/null | grep country | cut -c 15- | cut -c -2)
-	if ! curl --output /dev/null --silent --head --fail "https://archlinux.org/mirrorlist/?country=$COUNTRY"  1>/dev/null; then
+	if ! curl --output /dev/null --silent --head --fail "https://archlinux.org/mirrorlist/?country=$COUNTRY" 1>/dev/null; then
 		curl -Ls https://archlinux.org/mirrorlist/all | awk NR==2 RS= | sed 's/#Server/Server/g' > ./.junest/etc/pacman.d/mirrorlist
 	else
 		curl -Ls "https://archlinux.org/mirrorlist/?country=$COUNTRY" | sed 's/#Server/Server/g' > ./.junest/etc/pacman.d/mirrorlist
@@ -213,7 +213,6 @@ cat <<-'HEREDOC' >> ./AppRun
 HERE="$(dirname "$(readlink -f "$0")")"
 export UNION_PRELOAD="$HERE"
 export JUNEST_HOME="$HERE"/.junest
-export GSETTINGS_SCHEMA_DIR="$JUNEST_HOME"/usr/share/glib-2.0/schemas:"${GSETTINGS_SCHEMA_DIR}"
 
 if command -v unshare >/dev/null 2>&1 && ! unshare --user -p /bin/true >/dev/null 2>&1; then
    PROOT_ON=1
@@ -352,7 +351,7 @@ _extract_all_dependences() {
 	for arg in $OPTDEPS; do
 		_determine_packages_and_libraries
 	done
-	_extract_deps
+	[ -f ./depdeps ] && _extract_deps
 	rm -f ./depdeps
 
 	ARGS=$(echo "$DEPENDENCES" | tr " " "\n")
@@ -365,7 +364,6 @@ _extract_all_dependences() {
 		_determine_packages_and_libraries
 	done
 
-	_extract_deps
 	_extract_deps
 
 	rm -f ./packages
@@ -396,11 +394,11 @@ _savebins() {
 	mv ./"$APP".AppDir/.junest/usr/bin/bwrap ./save/
 	mv ./"$APP".AppDir/.junest/usr/bin/proot* ./save/
 	mv ./"$APP".AppDir/.junest/usr/bin/*$BIN* ./save/
-	mv ./"$APP".AppDir/.junest/usr/bin/bash ./save/
-	mv ./"$APP".AppDir/.junest/usr/bin/env ./save/
-	mv ./"$APP".AppDir/.junest/usr/bin/sh ./save/
- 	mv ./"$APP".AppDir/.junest/usr/bin/tr ./save/
-   	mv ./"$APP".AppDir/.junest/usr/bin/tty ./save/
+	coreutils="[ basename cat chmod chown cp cut dir du echo env expand expr fold head id ln ls mkdir mv readlink realpath rm rmdir seq sleep sort stty sum sync tac tail tee test timeout touch tr true tty uname uniq wc who whoami yes"
+	utils_bin="bash $coreutils grep ld sed sh"
+	for b in $utils_bin; do
+ 		mv ./"$APP".AppDir/.junest/usr/bin/"$b" ./save/
+   	done
 	for arg in $BINSAVED; do
 		mv ./"$APP".AppDir/.junest/usr/bin/*"$arg"* ./save/
 	done
@@ -444,7 +442,7 @@ _libkeywords() {
 
 _readelf_save() {
 	echo "◆ Saving libraries related to previously saved files"
-	find_libs=$(find ./save -type f -name *.so* | uniq)
+	find_libs=$(find ./save -type f -name '*.so*' | uniq)
 	for f in $find_libs; do
 		readelf -d "$f" | grep .so | sed 's:.* ::' | cut -c 2- | sed 's/\(^.*so\).*$/\1/' | uniq >> ./list &
 	done
@@ -513,7 +511,6 @@ _savelibs() {
 
 # Save files in /usr/share
 _saveshare() {
-	echo "◆ Saving files and directories in /usr/share using keywords"
 	mkdir save
 	mv ./"$APP".AppDir/.junest/usr/share/*$APP* ./save/
  	mv ./"$APP".AppDir/.junest/usr/share/*$BIN* ./save/
@@ -607,38 +604,14 @@ sed -i 's/ &$//g' ./"$APP".AppDir/.junest/usr/bin/hypnotix
 #	CREATE THE APPIMAGE
 #############################################################################
 
-[ -f ./*.AppImage ] && rm -Rf ./*archimage*.AppImage
+if test -f ./*.AppImage; then rm -Rf ./*archimage*.AppImage; fi
 
 APPNAME=$(cat ./"$APP".AppDir/*.desktop | grep 'Name=' | head -1 | cut -c 6- | sed 's/ /-/g')
-REPO="$APPNAME-appimage"
+REPO="Hypnotix-appimage"
 TAG="continuous"
+VERSION="$VERSION"
 UPINFO="gh-releases-zsync|$GITHUB_REPOSITORY_OWNER|$REPO|$TAG|*x86_64.AppImage.zsync"
 
-# Add udpate info to runtime
-if command -v llvm-objcopy &>/dev/null; then
-	LLVM_ON=1
-	echo "Adding update information \"$UPINFO\" to runtime..."
-	printf "$UPINFO" > data.upd_info
-	llvm-objcopy --update-section=.upd_info=data.upd_info \
-		--set-section-flags=.upd_info=noload,readonly ./uruntime
-	printf 'AI\x02' | dd of=./uruntime bs=1 count=3 seek=8 conv=notrunc
-fi
-
-# Export to AppImage
-./uruntime --appimage-mkdwarfs -f \
-	--set-owner 0 --set-group 0 \
-	--no-history --no-create-timestamp \
-	--compression zstd:level=22 -S24 -B16 \
-	--header uruntime \
-	-i ./"$APP".AppDir -o "$APPNAME"_"$VERSION"-archimage4.2-x86_64.AppImage
-
-chmod a+x ./*AppImage
-[ -n "$LLVM_ON" ] && zsyncmake *.AppImage -u *.AppImage
-
-if test -f ./*AppImage; then
-	echo "-----------------------------------------------------------------------------"
-	echo ""
-	echo "			YOUR APPIMAGE IS READY!"
-	echo ""
-	echo "-----------------------------------------------------------------------------"
-fi
+ARCH=x86_64 ./appimagetool --comp zstd --mksquashfs-opt -Xcompression-level --mksquashfs-opt 20 \
+	-u "$UPINFO" \
+	./"$APP".AppDir "$APPNAME"_"$VERSION"-archimage4.2-x86_64.AppImage
