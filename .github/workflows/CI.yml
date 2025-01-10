@@ -18,7 +18,7 @@ jobs:
       if: always()
       run: |
         sudo apt update
-        sudo apt install llvm desktop-file-utils
+        sudo apt install desktop-file-utils llvm zsync
         chmod a+x ./*junest.sh
         ./*junest.sh
         mkdir dist
