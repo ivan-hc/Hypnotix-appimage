@@ -2,7 +2,7 @@
 
 APP=hypnotix
 BIN="$APP" #CHANGE THIS IF THE NAME OF THE BINARY IS DIFFERENT FROM "$APP" (for example, the binary of "obs-studio" is "obs")
-DEPENDENCES="python-gobject" #SYNTAX: "APP1 APP2 APP3 APP4...", LEAVE BLANK IF NO OTHER DEPENDENCIES ARE NEEDED
+DEPENDENCES="python python-gobject python-mpv python-urllib3 python-idna" #SYNTAX: "APP1 APP2 APP3 APP4...", LEAVE BLANK IF NO OTHER DEPENDENCIES ARE NEEDED
 BASICSTUFF="binutils debugedit gzip"
 COMPILERS="base-devel"
 
@@ -10,14 +10,24 @@ COMPILERS="base-devel"
 #	KEYWORDS TO FIND AND SAVE WHEN COMPILING THE APPIMAGE
 #############################################################################
 
-BINSAVED="SAVEBINSPLEASE"
+BINSAVED="gsettings ldconfig"
 SHARESAVED="icons"
 lib_audio_keywords="alsa jack pipewire pulse"
-lib_browser_launcher="gio-launch-desktop libasound.so libatk-bridge libatspi libcloudproviders libdb- libdl.so libedit libepoxy libgtk-3.so.0 libjson-glib libnssutil libpthread.so librt.so libtinysparql libwayland-cursor libX11-xcb.so libxapp-gtk3-module.so libXcursor libXdamage libXi.so libXrandr p11 pk"
-LIBSAVED="girepository gdk-pixbuf librsvg libdav libGLX libmujs.so libblkid libgio- libpango libthai libdatrie libgraphite libbrotlidec.so \
-libbrotlicommon libjbig.so libXcomposite libXinerama libXau libXdmcp libsqlite libicuuc libicudata libxkbfile libopenjp libjxl_cms libhwy.so \
-libbrotlienc libogg libsharpyuv libgomp.so libsodium.so libpgm- libSPIRV-Tools-opt libmpg123.so libvorbisfile.so libidn libunistring.so libtasn \
-libhogweed.so libnettle.so libv4lconvert.so libnghttp libssh libpsl.so libgssapi_krb libFLAC.so libkrb libk5crypto libcom_err.so libkeyutils.so $lib_audio_keywords $lib_browser_launcher"
+lib_browser_launcher="gio-launch-desktop libasound.so libatk-bridge libatspi libcloudproviders libdb- libdl.so libedit libepoxy libgtk-3.so.0 libjson-glib libnssutil libpthread.so librt.so libtinysparql libwayland-cursor libX11-xcb.so libxapp-gtk3-module.so libXcursor libXdamage libXi.so libxkbfile.so libXrandr p11 pk"
+LIBSAVED="gdk-pixbuf girepository libaom.so libasyncns.so libavc libblkid libbrotlicommon \
+libbrotlidec.so libbrotlienc libbs libcom_err.so libcurl.so libdatrie libdav libdovi.so \
+libdvdread.so libfftw libFLAC.so libgio- libGLdispatch libglslang-default-resource-limits \
+libglslang.so libGLX libgnutls.so libgomp.so libgraphite libgsm.so libgssapi_krb libhogweed.so \
+libhwy.so libicudata libicuuc libidn libiec libjbig.so libjxl_cms libjxl.so libjxl_threads.so \
+libk5crypto libkeyutils.so libkrb liblz libmodplug.so libmp3lame.so libmpg123.so libmujs.so \
+libmvec.so libnettle.so libnghttp libogg libOpenCL.so libopencore- libopenjp libopenmpt.so \
+libopus.so libpango libpgm- libpostproc.so libpsl.so librav1e.so libraw librom librsvg \
+libsamplerate.so libSDL libshaderc_shared.so libsharpyuv libsnappy.so libsndfile.so \
+libsodium.so libsoxr.so libspeex.so libSPIRV libSPIRV-Tools-opt libsqlite libsrt.so \
+libssh libSvtAv libtasn libthai libtheora libunibreak.so libunistring.so libunwind.so \
+libv4l libv4lconvert.so libvidstab.so libvmaf.so libvorbisenc.so libvorbisfile.so libvorbis.so \
+libvpl.so libvpx.so libwebpmux.so libwebp.so libx264.so libx265.so libXau libxcb libXcomposite \
+libXdmcp libXinerama libxkbfile libxvidcore.so libzmq.so $lib_audio_keywords $lib_browser_launcher"
 
 [ -n "$lib_browser_launcher" ] && DEPENDENCES="$DEPENDENCES xapp hicolor-icon-theme"
 
@@ -282,7 +292,7 @@ chmod a+x "$APP".AppDir/AppRun
 #	EXTRACT PACKAGES
 #############################################################################
 
-[ -z "$extraction_count" ] && extraction_count=1
+[ -z "$extraction_count" ] && extraction_count=0
 [ ! -f ./autodeps ] && echo "$extraction_count" > ./autodeps
 [ -f ./autodeps ] && autodeps=$(cat ./autodeps)
 [ "$autodeps" != "$extraction_count" ] && rm -Rf ./deps ./packages && echo "$extraction_count" > ./autodeps
@@ -411,25 +421,11 @@ _savebins() {
 # Save files in /usr/lib
 _savelibs() {
 	echo "◆ Detect libraries related to /usr/bin files"
-	readelf -d ./"$APP".AppDir/.junest/usr/bin/* 2>/dev/null | grep NEEDED | tr '[] ' '\n' | grep ".so" | uniq >> ./list
+	libs4bin=$(readelf -d ./"$APP".AppDir/.junest/usr/bin/* 2>/dev/null | grep NEEDED | tr '[] ' '\n' | grep ".so")
 
-	echo "◆ Detect libraries of the main package"
-	base_libs=$(find ./base -type f | uniq)
-	for b in $base_libs; do
-		readelf -d "$b" 2>/dev/null | grep NEEDED | tr '[] ' '\n' | grep ".so" | uniq >> ./list &
-	done
-	wait
-
-	echo "◆ Detect libraries of the dependencies"
-	dep_libs=$(find ./deps -executable -type f | uniq)
-	for d in $dep_libs; do
-		readelf -d "$d" 2>/dev/null | grep NEEDED | tr '[] ' '\n' | grep ".so" | uniq >> ./list &
-	done
-	wait
-
-	echo "◆ Saving libraries"
+	echo "◆ Saving JuNest core libraries"
 	cp -r ./archlinux/.junest/usr/lib/ld-linux-x86-64.so* ./"$APP".AppDir/.junest/usr/lib/
-	lib_preset="$APP $BIN libdw libelf $(sort -u ./list)"
+	lib_preset="$APP $BIN gconv libdw libelf libresolv.so libtinfo.so $libs4bin"
 	LIBSAVED="$lib_preset $LIBSAVED $SHARESAVED"
 	for arg in $LIBSAVED; do
 		LIBPATHS="$LIBPATHS $(find ./archlinux/.junest/usr/lib -maxdepth 20 -wholename "*$arg*" | sed 's/\.\/archlinux\///g')"
@@ -438,7 +434,45 @@ _savelibs() {
 		cp -r ./archlinux/"$arg" "$APP".AppDir/"$arg" 2>/dev/null &
 	done
 	wait
-	rm list
+
+	echo "◆ Detect libraries of the main package"
+	base_libs=$(find ./base -type f | uniq)
+	lib_base_0=$(for b in $base_libs; do readelf -d "$b" 2>/dev/null | grep NEEDED | tr '[] ' '\n' | grep ".so"; done)
+
+	echo "◆ Detect libraries of the dependencies"
+	dep_libs=$(find ./deps -executable -name "*.so*")
+	lib_deps=$(for d in $dep_libs; do readelf -d "$d" 2>/dev/null | grep NEEDED | tr '[] ' '\n' | grep ".so"; done)
+
+	echo "◆ Detect and copy base libs"
+	basebin_libs=$(find ./base -executable -name "*.so*")
+	lib_base_1=$(for b in $basebin_libs; do readelf -d "$b" 2>/dev/null | grep NEEDED | tr '[] ' '\n' | grep ".so"; done)
+	lib_base_1=$(echo "$lib_base_1" | tr ' ' '\n' | sort -u | xargs)
+	lib_base_2=$(for b in $lib_base_1; do readelf -d ./archlinux/.junest/usr/lib/"$b" 2>/dev/null | grep NEEDED | tr '[] ' '\n' | grep ".so"; done)
+	lib_base_2=$(echo "$lib_base_2" | tr ' ' '\n' | sort -u | xargs)
+	lib_base_3=$(for b in $lib_base_2; do readelf -d ./archlinux/.junest/usr/lib/"$b" 2>/dev/null | grep NEEDED | tr '[] ' '\n' | grep ".so"; done)
+	lib_base_3=$(echo "$lib_base_3" | tr ' ' '\n' | sort -u | xargs)
+	lib_base_4=$(for b in $lib_base_3; do readelf -d ./archlinux/.junest/usr/lib/"$b" 2>/dev/null | grep NEEDED | tr '[] ' '\n' | grep ".so"; done)
+	lib_base_4=$(echo "$lib_base_4" | tr ' ' '\n' | sort -u | xargs)
+	lib_base_5=$(for b in $lib_base_4; do readelf -d ./archlinux/.junest/usr/lib/"$b" 2>/dev/null | grep NEEDED | tr '[] ' '\n' | grep ".so"; done)
+	lib_base_5=$(echo "$lib_base_5" | tr ' ' '\n' | sort -u | xargs)
+	lib_base_6=$(for b in $lib_base_5; do readelf -d ./archlinux/.junest/usr/lib/"$b" 2>/dev/null | grep NEEDED | tr '[] ' '\n' | grep ".so"; done)
+	lib_base_6=$(echo "$lib_base_6" | tr ' ' '\n' | sort -u | xargs)
+	lib_base_7=$(for b in $lib_base_6; do readelf -d ./archlinux/.junest/usr/lib/"$b" 2>/dev/null | grep NEEDED | tr '[] ' '\n' | grep ".so"; done)
+	lib_base_7=$(echo "$lib_base_7" | tr ' ' '\n' | sort -u | xargs)
+	lib_base_8=$(for b in $lib_base_7; do readelf -d ./archlinux/.junest/usr/lib/"$b" 2>/dev/null | grep NEEDED | tr '[] ' '\n' | grep ".so"; done)
+	lib_base_8=$(echo "$lib_base_8" | tr ' ' '\n' | sort -u | xargs)
+	lib_base_9=$(for b in $lib_base_8; do readelf -d ./archlinux/.junest/usr/lib/"$b" 2>/dev/null | grep NEEDED | tr '[] ' '\n' | grep ".so"; done)
+	lib_base_9=$(echo "$lib_base_9" | tr ' ' '\n' | sort -u | xargs)
+	lib_base_libs="$lib_base_0 $lib_base_1 $lib_base_2 $lib_base_3 $lib_base_4 $lib_base_5 $lib_base_6 $lib_base_7 $lib_base_8 $lib_base_9 $lib_deps"
+	lib_base_libs=$(echo "$lib_base_libs" | tr ' ' '\n' | sort -u | sed 's/.so.*/.so/' | xargs)
+	for l in $lib_base_libs; do
+		rsync -av ./archlinux/.junest/usr/lib/"$l"* ./"$APP".AppDir/.junest/usr/lib/ &
+	done
+	wait
+	for l in $lib_base_libs; do
+		rsync -av ./deps/usr/lib/"$l"* ./"$APP".AppDir/.junest/usr/lib/ &
+	done
+	wait
 }
 
 # Save files in /usr/share
