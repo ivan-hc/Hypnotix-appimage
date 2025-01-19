@@ -14,20 +14,13 @@ BINSAVED="gsettings ldconfig"
 SHARESAVED="icons"
 lib_audio_keywords="alsa jack pipewire pulse"
 lib_browser_launcher="gio-launch-desktop libasound.so libatk-bridge libatspi libcloudproviders libdb- libdl.so libedit libepoxy libgtk-3.so.0 libjson-glib libnssutil libpthread.so librt.so libtinysparql libwayland-cursor libX11-xcb.so libxapp-gtk3-module.so libXcursor libXdamage libXi.so libxkbfile.so libXrandr p11 pk"
-LIBSAVED="gdk-pixbuf girepository libaom.so libasyncns.so libavc libblkid libbrotlicommon \
-libbrotlidec.so libbrotlienc libbs libcom_err.so libcurl.so libdatrie libdav libdovi.so \
-libdvdread.so libfftw libFLAC.so libgio- libGLdispatch libglslang-default-resource-limits \
-libglslang.so libGLX libgnutls.so libgomp.so libgraphite libgsm.so libgssapi_krb libhogweed.so \
-libhwy.so libicudata libicuuc libidn libiec libjbig.so libjxl_cms libjxl.so libjxl_threads.so \
-libk5crypto libkeyutils.so libkrb liblz libmodplug.so libmp3lame.so libmpg123.so libmujs.so \
-libmvec.so libnettle.so libnghttp libogg libOpenCL.so libopencore- libopenjp libopenmpt.so \
-libopus.so libpango libpgm- libpostproc.so libpsl.so librav1e.so libraw librom librsvg \
-libsamplerate.so libSDL libshaderc_shared.so libsharpyuv libsnappy.so libsndfile.so \
-libsodium.so libsoxr.so libspeex.so libSPIRV libSPIRV-Tools-opt libsqlite libsrt.so \
-libssh libSvtAv libtasn libthai libtheora libunibreak.so libunistring.so libunwind.so \
-libv4l libv4lconvert.so libvidstab.so libvmaf.so libvorbisenc.so libvorbisfile.so libvorbis.so \
-libvpl.so libvpx.so libwebpmux.so libwebp.so libx264.so libx265.so libXau libxcb libXcomposite \
-libXdmcp libXinerama libxkbfile libxvidcore.so libzmq.so $lib_audio_keywords $lib_browser_launcher"
+LIBSAVED="gdk-pixbuf girepository libmujs.so libunibreak.so libvpx.so libwebpmux.so libdav libopencore- libsnappy.so libaom.so \
+libgsm.so libmp3lame.so libopenjp librav libspeex.so libSvtAv libtheoraenc.so libtheoradec.so libvorbis.so libvorbisenc.so libx26 \
+libxvidcore.so libvpl.so libpostproc.so libbs libvmaf.so libvidstab.so libzmq.so libglslang.so libOpenCL.so libdvdread.so \
+libmodplug.so libopenmpt.so libsrt.so libssh.so libunwind.so libshaderc_shared.so libglslang-default-resource-limits \
+libdovi.so libsoxr.so liblz libraw libavc librom libiec libxcb-shape.so libxcb-xfixes.so libSDL libv4l libfftw \
+libcurl.so libGLdispatch.so libGLX.so libxcb-dri libjxl_cms.so libbrotlienc.so libsharpyuv.so libsodium.so \
+libunistring.so libhogweed.so libFLAC.so $lib_audio_keywords $lib_browser_launcher"
 
 [ -n "$lib_browser_launcher" ] && DEPENDENCES="$DEPENDENCES xapp hicolor-icon-theme"
 
@@ -434,6 +427,8 @@ _savelibs() {
 		cp -r ./archlinux/"$arg" "$APP".AppDir/"$arg" 2>/dev/null &
 	done
 	wait
+	core_libs=$(find ./"$APP".AppDir -type f)
+	lib_core=$(for c in $core_libs; do readelf -d "$c" 2>/dev/null | grep NEEDED | tr '[] ' '\n' | grep ".so"; done)
 
 	echo "◆ Detect libraries of the main package"
 	base_libs=$(find ./base -type f | uniq)
@@ -463,7 +458,7 @@ _savelibs() {
 	lib_base_8=$(echo "$lib_base_8" | tr ' ' '\n' | sort -u | xargs)
 	lib_base_9=$(for b in $lib_base_8; do readelf -d ./archlinux/.junest/usr/lib/"$b" 2>/dev/null | grep NEEDED | tr '[] ' '\n' | grep ".so"; done)
 	lib_base_9=$(echo "$lib_base_9" | tr ' ' '\n' | sort -u | xargs)
-	lib_base_libs="$lib_base_0 $lib_base_1 $lib_base_2 $lib_base_3 $lib_base_4 $lib_base_5 $lib_base_6 $lib_base_7 $lib_base_8 $lib_base_9 $lib_deps"
+	lib_base_libs="$lib_core $lib_base_0 $lib_base_1 $lib_base_2 $lib_base_3 $lib_base_4 $lib_base_5 $lib_base_6 $lib_base_7 $lib_base_8 $lib_base_9 $lib_deps"
 	lib_base_libs=$(echo "$lib_base_libs" | tr ' ' '\n' | sort -u | sed 's/.so.*/.so/' | xargs)
 	for l in $lib_base_libs; do
 		rsync -av ./archlinux/.junest/usr/lib/"$l"* ./"$APP".AppDir/.junest/usr/lib/ &
