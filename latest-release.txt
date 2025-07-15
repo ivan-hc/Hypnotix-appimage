@@ -1,2 +1,1 @@
-https://github.com/ivan-hc/Hypnotix-appimage/releases/download/continuous/Hypnotix_4.9-1-archimage4.3-x86_64.AppImage
-Mon Jul 14 01:50:59 UTC 2025
+Tue Jul 15 01:51:19 UTC 2025
