@@ -301,10 +301,10 @@ if [ ! -d archlinux/AppDir ]; then
 
 	cd .. || exit 1
 
-	rsync -av archlinux/AppDir/etc AppDir/.junest/etc/
-	rsync -av archlinux/AppDir/bin AppDir/.junest/usr/bin/
-	rsync -av archlinux/AppDir/lib AppDir/.junest/usr/lib/
-	rsync -av archlinux/AppDir/share AppDir/.junest/usr/share/
+	rsync -av archlinux/AppDir/etc/* AppDir/.junest/etc/
+	rsync -av archlinux/AppDir/bin/* AppDir/.junest/usr/bin/
+	rsync -av archlinux/AppDir/lib/* AppDir/.junest/usr/lib/
+	rsync -av archlinux/AppDir/share/* AppDir/.junest/usr/share/
 fi
 
 printf -- "\n-----------------------------------------------------------------------------\n IMPLEMENTING NECESSARY LIBRARIES (MAY TAKE SEVERAL MINUTES)\n-----------------------------------------------------------------------------\n"
