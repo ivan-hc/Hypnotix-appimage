@@ -20,6 +20,13 @@ BIN_REMOVED="gcc"
 LIB_REMOVED="gcc"
 SHARE_REMOVED="gcc icons/AdwaitaLegacy icons/Adwaita/cursors/ terminfo"
 
+# Post-installation processes (add whatever you want)
+_post_installation_processes() {
+	printf "\n◆ User's processes: \n\n"
+	echo " - Patch /usr/bin/$BIN"
+	sed -i 's/ &$//g' AppDir/.junest/usr/bin/hypnotix
+}
+
 ##########################################################################################################################################################
 #	SETUP THE ENVIRONMENT
 ##########################################################################################################################################################
@@ -136,7 +143,7 @@ fi
 
 cd ..
 
-printf -- "\n-----------------------------------------------------------------------------\n CREATING THE APPDIR\n-----------------------------------------------------------------------------\n"
+printf -- "\n-----------------------------------------------------------------------------\n CREATING THE APPDIR\n-----------------------------------------------------------------------------\n\n"
 
 # Set locale
 rm -f archlinux/.junest/etc/locale.conf
@@ -282,25 +289,41 @@ chmod a+x AppDir/AppRun
 #	DEPLOY DEPENDENCIES
 ##########################################################################################################################################################
 
-printf -- "\n-----------------------------------------------------------------------------\n IMPLEMENTING NECESSARY LIBRARIES (MAY TAKE SEVERAL MINUTES)\n-----------------------------------------------------------------------------\n"
+printf -- "\n-----------------------------------------------------------------------------\n IMPLEMENTING APP'S SPECIFIC LIBRARIES (SHARUN)\n-----------------------------------------------------------------------------\n"
 
-cd archlinux || exit 1
-SHARUN="https://raw.githubusercontent.com/pkgforge-dev/Anylinux-AppImages/refs/heads/main/useful-tools/quick-sharun.sh"
+_run_quick_sharun() {
+	cd archlinux || exit 1
+	SHARUN="https://raw.githubusercontent.com/pkgforge-dev/Anylinux-AppImages/refs/heads/main/useful-tools/quick-sharun.sh"
 
-if [ ! -f ./quick-sharun ]; then
-	wget --retry-connrefused --tries=30 "$SHARUN" -O ./quick-sharun || exit 1
-	chmod +x ./quick-sharun
+	if [ ! -f ./quick-sharun ]; then
+		wget --retry-connrefused --tries=30 "$SHARUN" -O ./quick-sharun || exit 1
+		chmod +x ./quick-sharun
+	fi
+
+	_JUNEST_CMD -- ./quick-sharun /usr/bin/"$BIN"
+
+	cd .. || exit 1
+	echo "$DEPENDENCES" > ./deps
+	[ ! -f ./deps ] && touch ./deps
+	printf "\n-----------------------------------------------------------------------------\n"
+}
+
+if [ ! -f ./deps ]; then
+	_run_quick_sharun
+	echo "$DEPENDENCES" > ./deps
+elif [ -f ./deps ]; then
+	DEPENDENCES0=$(cat ./deps)
+	if [ "$DEPENDENCES0" != "$DEPENDENCES" ]; then
+		_run_quick_sharun
+	fi
 fi
 
-_JUNEST_CMD -- ./quick-sharun /usr/bin/"$BIN"
+rsync -av archlinux/AppDir/etc/* AppDir/.junest/etc/ | printf "\n◆ Saving /etc" 
+rsync -av archlinux/AppDir/bin/* AppDir/.junest/usr/bin/ | printf "\n◆ Saving /usr/bin"
+rsync -av archlinux/AppDir/lib/* AppDir/.junest/usr/lib/ | printf "\n◆ Saving /usr/lib"
+rsync -av archlinux/AppDir/share/* AppDir/.junest/usr/share/ | printf "\n◆ Saving /usr/share\n"
 
-cd .. || exit 1
-rsync -av archlinux/AppDir/etc/* AppDir/.junest/etc/
-rsync -av archlinux/AppDir/bin/* AppDir/.junest/usr/bin/
-rsync -av archlinux/AppDir/lib/* AppDir/.junest/usr/lib/
-rsync -av archlinux/AppDir/share/* AppDir/.junest/usr/share/
-
-printf -- "\n-----------------------------------------------------------------------------\n IMPLEMENTING NECESSARY LIBRARIES (MAY TAKE SEVERAL MINUTES)\n-----------------------------------------------------------------------------\n"
+printf -- "\n-----------------------------------------------------------------------------\n IMPLEMENTING USER'S SELECTED FILES AND DIRECTORIES\n-----------------------------------------------------------------------------\n\n"
 
 # Save files in /usr/bin
 _savebins() {
@@ -382,7 +405,7 @@ _saveshare 2>/dev/null
 
 printf -- "\n-----------------------------------------------------------------------------\n ASSEMBLING THE APPIMAGE\n-----------------------------------------------------------------------------\n"
 
-sed -i 's/ &$//g' AppDir/.junest/usr/bin/hypnotix
+_post_installation_processes
 
 ##########################################################################################################################################################
 #	REMOVE BLOATWARES, ENABLE MOUNTPOINTS
@@ -416,6 +439,8 @@ _enable_mountpoints_for_the_inbuilt_bubblewrap() {
 	[ ! -e AppDir/.junest/usr/share/X11/xkb ] && rm -f AppDir/.junest/usr/share/X11/xkb && mkdir -p AppDir/.junest/usr/share/X11/xkb && sed -i -- 's# /var"$# /usr/share/X11/xkb /var"#g' AppDir/AppRun
 }
 
+printf "\n◆ Trying to reduce size:\n\n"
+
 _remove_more_bloatwares
 find AppDir/.junest/usr/lib AppDir/.junest/usr/lib32 -type f -regex '.*\.a' -exec rm -f {} \; 2>/dev/null
 find AppDir/.junest/usr -type f -regex '.*\.so.*' -exec strip --strip-debug {} \;
@@ -446,6 +471,5 @@ _appimagetool() {
 	fi
 }
 
-ARCH=x86_64 _appimagetool --comp zstd --mksquashfs-opt -Xcompression-level --mksquashfs-opt 20 \
-	-u "$UPINFO" \
+ARCH=x86_64 _appimagetool -u "$UPINFO" \
 	AppDir "$APPNAME"_"$VERSION"-archimage5.0-x86_64.AppImage
