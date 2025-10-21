@@ -350,7 +350,7 @@ _savelibs() {
 
 	echo "◆ Saving JuNest core libraries"
 	cp -r ./archlinux/.junest/usr/lib/ld-linux-x86-64.so* AppDir/.junest/usr/lib/
-	lib_preset="$APP $BIN gconv libcurl libdw libelf libresolv.so libtinfo.so profile.d $libs4bin"
+	lib_preset="$APP $BIN libdw libelf libresolv.so libtinfo.so profile.d $libs4bin"
 	LIBSAVED="$lib_preset $LIBSAVED"
 	for arg in $LIBSAVED; do
 		LIBPATHS="$LIBPATHS $(find ./archlinux/.junest/usr/lib -maxdepth 20 -wholename "*$arg*" | sed 's/\.\/archlinux\///g')"
@@ -422,7 +422,7 @@ _remove_more_bloatwares() {
 	rm -Rf AppDir/.junest/home # remove the inbuilt home
 	rm -Rf AppDir/.junest/usr/include # files related to the compiler
 	rm -Rf AppDir/.junest/usr/share/man # AppImages are not ment to have man command
-	rm -Rf AppDir/.junest/usr/lib/python*/__pycache__/*
+	rm -Rf AppDir/.junest/usr/lib/python*/__pycache__/* AppDir/.junest/usr/lib/python*/site-packages/sqlalchemy AppDir/.junest/usr/lib/python*/site-packages/yt_dlp
 	rm -Rf AppDir/.junest/var/* # remove all packages downloaded with the package manager
 }
 
