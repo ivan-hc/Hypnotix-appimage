@@ -8,9 +8,9 @@ COMPILERS="base-devel"
 
 # Set keywords to searchan include in names of directories and files in /usr/bin (BINSAVED), /usr/share (SHARESAVED) and /usr/lib (LIBSAVED)
 BINSAVED="gsettings ldconfig python"
-SHARESAVED="circle-flags icons"
+SHARESAVED="SAVESHAREPLEASE"
 lib_browser_launcher="gio-launch-desktop libasound.so libatk-bridge libatspi libcloudproviders libdb- libdl.so libedit libepoxy libgtk-3.so.0 libjson-glib libnssutil libpthread.so librt.so libtinysparql libwayland-cursor libX11-xcb.so libxapp-gtk3-module.so libXcursor libXdamage libXi.so libxkbfile.so libXrandr p11 pk"
-LIBSAVED="python hypnotix girepository libmpv libmujs libglslang-default-resource-limits libsoxr libsodium libSDL svg gdk-pixbuf $lib_browser_launcher"
+LIBSAVED="python libmpv libmujs libglslang-default-resource-limits libsoxr libsodium libSDL svg gdk-pixbuf Gtk XApp xlib Gdk cairo GObject GLib Pango HarfBuzz freetype2 Gio GModule Atk $lib_browser_launcher"
 
 # Set the items you want to manually REMOVE. Complete the path in /etc/, /usr/bin/, /usr/lib/, /usr/lib/python*/ and /usr/share/ respectively.
 # The "rm" command will take into account the listed object/path and add an asterisk at the end, completing the path to be removed.
@@ -109,7 +109,7 @@ fi
 ##########################################################################################################################################################
 
 _JUNEST_CMD -- yay -Syy
-#_JUNEST_CMD -- gpg --keyserver keyserver.ubuntu.com --recv-key C01E1CAD5EA2C4F0B8E3571504C367C218ADD4FF # UNCOMMENT IF YOU USE THE AUR
+_JUNEST_CMD -- gpg --keyserver keyserver.ubuntu.com --recv-key C01E1CAD5EA2C4F0B8E3571504C367C218ADD4FF # UNCOMMENT IF YOU USE THE AUR
 if [ -n "$BASICSTUFF" ]; then
 	_JUNEST_CMD -- yay --noconfirm -S $BASICSTUFF
 fi
@@ -145,6 +145,13 @@ fi
 cd ..
 
 printf -- "\n-----------------------------------------------------------------------------\n CREATING THE APPDIR\n-----------------------------------------------------------------------------\n\n"
+
+if [ ! -f ./deps ]; then
+	rm -Rf AppDir/*
+elif [ -f ./deps ]; then
+	DEPENDENCES0=$(cat ./deps)
+	[ "$DEPENDENCES0" != "$DEPENDENCES" ] && rm -Rf AppDir/*
+fi
 
 # Set locale
 rm -f archlinux/.junest/etc/locale.conf
@@ -305,6 +312,55 @@ rsync -av archlinux/AppDir/bin/* AppDir/.junest/usr/bin/ | printf "\n◆ Saving 
 rsync -av archlinux/AppDir/lib/* AppDir/.junest/usr/lib/ | printf "\n◆ Saving /usr/lib"
 rsync -av archlinux/AppDir/share/* AppDir/.junest/usr/share/ | printf "\n◆ Saving /usr/share\n"
 
+# Extract the main package in the AppDir
+_extract_base_to_AppDir() {
+	rsync -av base/etc/* AppDir/.junest/etc/ 2>/dev/null
+	rsync -av base/usr/bin/* AppDir/.junest/usr/bin/ 2>/dev/null
+	rsync -av base/usr/lib/* AppDir/.junest/usr/lib/ 2>/dev/null
+	rsync -av base/usr/share/* AppDir/.junest/usr/share/ 2>/dev/null
+	if [ -d archlinux/.junest/usr/lib32 ]; then
+		mkdir -p AppDir/.junest/usr/lib32
+		rsync -av archlinux/.junest/usr/lib32/* AppDir/.junest/usr/lib32/ 2>/dev/null
+	fi
+}
+
+_extract_main_package() {
+	mkdir -p base
+	rm -Rf ./base/*
+	pkg_full_path=$(find ./archlinux/.junest -type f -name "$APP-*zst")
+	if [ "$(echo "$pkg_full_path" | wc -l)" = 1 ]; then
+		pkg_full_path=$(find ./archlinux/.junest -type f -name "$APP-*zst")
+	else
+		for p in $pkg_full_path; do
+			if tar fx "$p" .PKGINFO -O | grep -q "pkgname = $APP$"; then
+				pkg_full_path="$p"
+			fi
+		done
+	fi
+	[ -z "$pkg_full_path" ] && echo "💀 ERROR: no package found for \"$APP\", operation aborted!" && exit 0
+	tar fx "$pkg_full_path" -C ./base/
+	_extract_base_to_AppDir | printf "\n◆ Extract the base package to AppDir\n"
+}
+
+_extract_core_dependencies() {
+	if [ -n "$DEPENDENCES" ]; then
+		for d in $DEPENDENCES; do
+			if test -f ./archlinux/"$d"-*; then
+				tar fx ./archlinux/"$d"-* -C ./base/ | printf "\n◆ Force \"$d\""
+			else
+				pkg_full_path=$(find ./archlinux -type f -name "$d-[0-9]*zst")
+				tar fx "$pkg_full_path" -C ./base/ | printf "\n◆ Force \"$d\""
+			fi
+		done
+		_extract_base_to_AppDir | printf "\n\n◆ Extract core dependencies to AppDir\n"
+	fi
+}
+
+_extract_main_package
+_extract_core_dependencies
+
+tar fx "$(find ./archlinux -type f -name "hicolor-icon-theme-[0-9]*zst")" -C ./base/ 2>/dev/null
+
 printf -- "\n-----------------------------------------------------------------------------\n IMPLEMENTING USER'S SELECTED FILES AND DIRECTORIES\n-----------------------------------------------------------------------------\n\n"
 
 # Save files in /usr/bin
@@ -437,10 +493,11 @@ _enable_mountpoints_for_the_inbuilt_bubblewrap
 if test -f ./*.AppImage; then rm -Rf ./*archimage*.AppImage; fi
 
 APPNAME=$(cat AppDir/*.desktop | grep '^Name=' | head -1 | cut -c 6- | sed 's/ /-/g')
-REPO="$APPNAME-appimage"
-TAG="continuous"
-VERSION="$VERSION"
+REPO="Hypnotix-appimage"
+TAG="latest"
 UPINFO="gh-releases-zsync|$GITHUB_REPOSITORY_OWNER|$REPO|$TAG|*x86_64.AppImage.zsync"
+
+echo "$VERSION" > ./version
 
 _appimagetool() {
 	if ! command -v appimagetool 1>/dev/null; then
