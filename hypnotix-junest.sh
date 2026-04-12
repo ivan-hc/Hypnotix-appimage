@@ -2,14 +2,14 @@
 
 APP=hypnotix
 BIN="$APP" #CHANGE THIS IF THE NAME OF THE BINARY IS DIFFERENT FROM "$APP" (for example, the binary of "obs-studio" is "obs")
-DEPENDENCES="circle-flags" #SYNTAX: "APP1 APP2 APP3 APP4...", LEAVE BLANK IF NO OTHER DEPENDENCIES ARE NEEDED
+DEPENDENCES="circle-flags python-cairo python-gobject" #SYNTAX: "APP1 APP2 APP3 APP4...", LEAVE BLANK IF NO OTHER DEPENDENCIES ARE NEEDED
 BASICSTUFF="binutils debugedit gzip"
 COMPILERS="base-devel"
 
 # Set keywords to searchan include in names of directories and files in /usr/bin (BINSAVED), /usr/share (SHARESAVED) and /usr/lib (LIBSAVED)
 BINSAVED="gsettings ldconfig python"
 SHARESAVED="SAVESHAREPLEASE"
-LIBSAVED="python libmpv libmujs libglslang-default-resource-limits libsoxr libsodium libSDL svg gdk-pixbuf Gtk XApp xlib Gdk cairo GObject GLib Pango HarfBuzz freetype2 Gio GModule Atk"
+LIBSAVED="python libmpv libmujs libglslang-default-resource-limits libsoxr libsodium libSDL svg gdk-pixbuf Gtk XApp xlib Gdk cairo GObject GLib Pango HarfBuzz freetype2 Gio GModule Atk Surface"
 
 # Set the items you want to manually REMOVE. Complete the path in /etc/, /usr/bin/, /usr/lib/, /usr/lib/python*/ and /usr/share/ respectively.
 # The "rm" command will take into account the listed object/path and add an asterisk at the end, completing the path to be removed.
